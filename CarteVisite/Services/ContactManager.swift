@@ -114,4 +114,23 @@ enum ContactManager {
         try data.write(to: url, options: .atomic)
         return url
     }
+
+    // MARK: - Export du coffre
+
+    /// Genere les donnees vCard de plusieurs cartes (un seul fichier .vcf).
+    static func vCardData(for cards: [BusinessCard]) throws -> Data {
+        let contacts = cards.map { makeContact(from: $0) }
+        return try CNContactVCardSerialization.data(with: contacts)
+    }
+
+    /// Exporte toutes les cartes dans un fichier .vcf temporaire et renvoie son URL.
+    static func exportFileURL(cards: [BusinessCard]) throws -> URL {
+        let data = try vCardData(for: cards)
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let fileName = "coffre-cartes-\(formatter.string(from: .now)).vcf"
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+        try data.write(to: url, options: .atomic)
+        return url
+    }
 }

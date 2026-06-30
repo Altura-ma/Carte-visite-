@@ -12,6 +12,7 @@ struct AddCardView: View {
     @State private var draft = CardDraft()
     @State private var isAnalyzing = true
     @State private var rawText = ""
+    @State private var detectedQR = false
     @State private var errorMessage: String?
 
     var body: some View {
@@ -37,6 +38,14 @@ struct AddCardView: View {
                         }
                     }
                 } else {
+                    if detectedQR {
+                        Section {
+                            Label("Code QR detecte : les informations ont ete pre-remplies automatiquement.",
+                                  systemImage: "qrcode.viewfinder")
+                                .font(.footnote)
+                                .foregroundStyle(.green)
+                        }
+                    }
                     CardFormFields(draft: $draft)
 
                     if let errorMessage {
@@ -71,6 +80,7 @@ struct AddCardView: View {
             let fields = try await CardScanner.scan(image)
             draft = CardDraft(from: fields)
             rawText = fields.rawText
+            detectedQR = fields.detectedQRCode
         } catch {
             errorMessage = "Aucun texte detecte automatiquement. Saisissez les informations manuellement."
         }

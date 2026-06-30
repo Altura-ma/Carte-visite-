@@ -15,8 +15,12 @@ Tout fonctionne **hors-ligne** : aucune donnée ne quitte l'appareil.
 - **Import depuis la photothèque** — analysez une photo existante.
 - **Extraction intelligente des champs** — nom, poste, société, email, téléphone, mobile, site web, adresse
   (heuristiques + expressions régulières, voir `CardTextParser.swift`).
+- **Lecture des QR codes / codes-barres** — détection locale (`VNDetectBarcodesRequest`) et
+  interprétation des formats **vCard, MECARD, URL, mailto:, tel:** (voir `BarcodeParser.swift`).
+  Les données structurées du QR sont prioritaires sur l'OCR.
 - **Ajout aux contacts en 1 clic** — création d'un contact via le framework **Contacts**.
 - **Partage** — génération d'une **vCard (.vcf)** + image, partagées via la feuille système iOS.
+- **Export du coffre** — exporte toutes les cartes dans un seul fichier **.vcf** (sauvegarde / migration).
 - **Recherche, édition et suppression** des cartes.
 
 ## 🧠 Comment marche la reconnaissance « IA locale » ?
@@ -51,10 +55,11 @@ CarteVisite/
 ├─ Models/
 │  └─ BusinessCard.swift       # Modèle de données local (+ miniature)
 ├─ Services/
-│  ├─ CardScanner.swift        # OCR Vision (local)
-│  ├─ CardTextParser.swift     # Extraction des champs
+│  ├─ CardScanner.swift        # OCR Vision + lecture QR codes (local)
+│  ├─ CardTextParser.swift     # Extraction des champs depuis le texte
+│  ├─ BarcodeParser.swift      # Interprétation des QR codes (vCard/MECARD/URL)
 │  ├─ ImageProcessing.swift    # Redimensionnement + miniatures
-│  └─ ContactManager.swift     # Contacts + vCard
+│  └─ ContactManager.swift     # Contacts + vCard + export
 └─ Views/
    ├─ CardListView.swift       # Le coffre (liste + recherche + ajout)
    ├─ AddCardView.swift        # Revue après scan (analyse + correction)
@@ -92,7 +97,7 @@ Déclarées dans les réglages du projet (`INFOPLIST_KEY_*`) :
 
 ## 🗺️ Pistes d'amélioration
 
-- Reconnaissance des logos / QR codes (Vision `VNDetectBarcodesRequest`).
 - Détection de langue automatique et support multilingue étendu.
 - Tags / dossiers pour organiser les cartes.
 - Synchronisation iCloud (CloudKit) optionnelle.
+- Import d'un fichier .vcf existant dans le coffre.

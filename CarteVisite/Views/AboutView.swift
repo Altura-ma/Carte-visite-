@@ -34,10 +34,12 @@ struct AboutView: View {
                                text: "Capturez une carte avec l'appareil photo ou choisissez une photo existante.")
                     FeatureRow(icon: "text.viewfinder", title: "Reconnaissance locale",
                                text: "Le texte est analyse directement sur votre appareil avec la technologie Vision d'Apple.")
+                    FeatureRow(icon: "qrcode.viewfinder", title: "Lecture des QR codes",
+                               text: "Les codes QR des cartes (vCard, MECARD, URL…) sont lus et remplissent automatiquement la fiche.")
                     FeatureRow(icon: "person.crop.circle.badge.plus", title: "Contact en 1 clic",
                                text: "Ajoutez la personne a vos contacts instantanement.")
-                    FeatureRow(icon: "square.and.arrow.up", title: "Partage",
-                               text: "Envoyez une carte au format vCard, avec sa photo.")
+                    FeatureRow(icon: "square.and.arrow.up", title: "Partage et export",
+                               text: "Partagez une carte au format vCard, ou exportez tout le coffre en un fichier .vcf.")
                 }
 
                 Section("Confidentialite") {

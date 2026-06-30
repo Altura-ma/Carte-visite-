@@ -15,6 +15,9 @@ struct CardListView: View {
     @State private var pendingImage: UIImage?
     @State private var showAddSheet = false
     @State private var showAbout = false
+    @State private var showShare = false
+    @State private var shareItems: [Any] = []
+    @State private var exportError: String?
 
     private var filteredCards: [BusinessCard] {
         guard !searchText.isEmpty else { return cards }
@@ -37,12 +40,22 @@ struct CardListView: View {
             .navigationTitle("Coffre de cartes")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        showAbout = true
+                    Menu {
+                        Button {
+                            exportAll()
+                        } label: {
+                            Label("Exporter le coffre (.vcf)", systemImage: "square.and.arrow.up")
+                        }
+                        .disabled(cards.isEmpty)
+                        Button {
+                            showAbout = true
+                        } label: {
+                            Label("A propos", systemImage: "info.circle")
+                        }
                     } label: {
-                        Image(systemName: "info.circle")
+                        Image(systemName: "ellipsis.circle")
                     }
-                    .accessibilityLabel("A propos")
+                    .accessibilityLabel("Menu")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -83,6 +96,17 @@ struct CardListView: View {
             .sheet(isPresented: $showAbout) {
                 AboutView()
             }
+            .sheet(isPresented: $showShare) {
+                ShareSheet(items: shareItems)
+            }
+            .alert("Export impossible", isPresented: Binding(
+                get: { exportError != nil },
+                set: { if !$0 { exportError = nil } }
+            )) {
+                Button("OK") {}
+            } message: {
+                Text(exportError ?? "")
+            }
             .onChange(of: photoItem) { _, newItem in
                 guard let newItem else { return }
                 Task {
@@ -93,6 +117,17 @@ struct CardListView: View {
                     photoItem = nil
                 }
             }
+        }
+    }
+
+    private func exportAll() {
+        guard !cards.isEmpty else { return }
+        do {
+            let url = try ContactManager.exportFileURL(cards: cards)
+            shareItems = [url]
+            showShare = true
+        } catch {
+            exportError = error.localizedDescription
         }
     }
 

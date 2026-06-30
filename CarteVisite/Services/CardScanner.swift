@@ -13,6 +13,8 @@ struct ScannedFields {
     var website = ""
     var address = ""
     var rawText = ""
+    /// Vrai si un code QR/barre a ete detecte et exploite sur la carte.
+    var detectedQRCode = false
 }
 
 /// Une ligne de texte reconnue avec sa position et sa hauteur (taille de police approx.).
@@ -32,11 +34,68 @@ enum CardScanner {
 
     enum ScanError: Error { case invalidImage, noText }
 
-    /// Reconnait le texte d'une image et le structure en champs de contact.
+    /// Analyse complete : OCR du texte **et** lecture des codes QR / codes-barres.
+    ///
+    /// Les donnees d'un code QR (vCard, MECARD, URL…) sont structurees et donc
+    /// considerees comme fiables : elles ont priorite sur le texte reconnu.
     static func scan(_ image: UIImage) async throws -> ScannedFields {
-        let lines = try await recognizeLines(in: image)
-        guard !lines.isEmpty else { throw ScanError.noText }
-        return CardTextParser.parse(lines: lines)
+        let lines = (try? await recognizeLines(in: image)) ?? []
+        let payloads = (try? await recognizeBarcodes(in: image)) ?? []
+
+        guard !lines.isEmpty || !payloads.isEmpty else { throw ScanError.noText }
+
+        var fields = lines.isEmpty ? ScannedFields() : CardTextParser.parse(lines: lines)
+
+        // Fusion des donnees du code QR (prioritaires sur l'OCR).
+        if let qr = BarcodeParser.parse(payloads: payloads) {
+            fields = merge(ocr: fields, qr: qr)
+            fields.detectedQRCode = true
+            let qrText = payloads.joined(separator: "\n")
+            fields.rawText = fields.rawText.isEmpty ? qrText : fields.rawText + "\n\n[QR]\n" + qrText
+        }
+
+        return fields
+    }
+
+    /// Remplace les champs OCR par ceux du code QR lorsqu'ils sont renseignes.
+    private static func merge(ocr: ScannedFields, qr: ScannedFields) -> ScannedFields {
+        var r = ocr
+        if !qr.fullName.isEmpty { r.fullName = qr.fullName }
+        if !qr.jobTitle.isEmpty { r.jobTitle = qr.jobTitle }
+        if !qr.company.isEmpty { r.company = qr.company }
+        if !qr.email.isEmpty { r.email = qr.email }
+        if !qr.phone.isEmpty { r.phone = qr.phone }
+        if !qr.mobile.isEmpty { r.mobile = qr.mobile }
+        if !qr.website.isEmpty { r.website = qr.website }
+        if !qr.address.isEmpty { r.address = qr.address }
+        return r
+    }
+
+    /// Lit les codes QR / codes-barres presents sur l'image (Vision, en local).
+    static func recognizeBarcodes(in image: UIImage) async throws -> [String] {
+        guard let cgImage = image.cgImage else { throw ScanError.invalidImage }
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let request = VNDetectBarcodesRequest { request, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                let observations = (request.results as? [VNBarcodeObservation]) ?? []
+                let payloads = observations.compactMap { $0.payloadStringValue }
+                continuation.resume(returning: payloads)
+            }
+            request.symbologies = [.qr, .aztec, .dataMatrix, .pdf417]
+
+            let handler = VNImageRequestHandler(cgImage: cgImage, orientation: image.cgImageOrientation, options: [:])
+            DispatchQueue.global(qos: .userInitiated).async {
+                do {
+                    try handler.perform([request])
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
     }
 
     /// Etape OCR brute : renvoie les lignes reconnues avec leur position.
