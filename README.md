@@ -46,11 +46,14 @@ L'app n'utilise aucun service en ligne. Le pipeline est :
 ```
 CarteVisite/
 ├─ CarteVisiteApp.swift        # Point d'entrée + conteneur SwiftData
+├─ PrivacyInfo.xcprivacy       # Manifeste de confidentialité (App Store)
+├─ Assets.xcassets/            # Icône d'app + couleur d'accent
 ├─ Models/
-│  └─ BusinessCard.swift       # Modèle de données local
+│  └─ BusinessCard.swift       # Modèle de données local (+ miniature)
 ├─ Services/
 │  ├─ CardScanner.swift        # OCR Vision (local)
 │  ├─ CardTextParser.swift     # Extraction des champs
+│  ├─ ImageProcessing.swift    # Redimensionnement + miniatures
 │  └─ ContactManager.swift     # Contacts + vCard
 └─ Views/
    ├─ CardListView.swift       # Le coffre (liste + recherche + ajout)
@@ -58,8 +61,26 @@ CarteVisite/
    ├─ CardDetailView.swift     # Détail + actions (contact, partage)
    ├─ CardEditView.swift       # Édition
    ├─ CardForm.swift           # Formulaire réutilisable
+   ├─ AboutView.swift          # Écran « À propos » + confidentialité
    └─ DocumentScannerView.swift# Scanner VisionKit + feuille de partage
 ```
+
+## 🚀 Préparer la publication sur l'App Store
+
+L'app est prête à être archivée. Avant de soumettre :
+
+1. **Bundle identifier** — remplacez `com.cartevisite.app` par le vôtre
+   (cible *CarteVisite* → *Signing & Capabilities* → *Bundle Identifier*).
+2. **Équipe de signature** — sélectionnez votre compte développeur Apple.
+3. **Version / build** — `MARKETING_VERSION` (1.0) et `CURRENT_PROJECT_VERSION` (1).
+4. **Icône** — fournie (`Assets.xcassets/AppIcon`), 1024×1024, opaque, prête.
+5. **Manifeste de confidentialité** — `PrivacyInfo.xcprivacy` est inclus
+   (aucun tracking, aucune collecte de données, APIs à raison requise déclarées).
+6. **Fiche App Store Connect** — l'app ne collecte aucune donnée : répondez
+   « Non » à la collecte de données dans le questionnaire de confidentialité.
+7. `Product › Archive` puis distribution via l'Organizer.
+
+> ⚠️ Le **scan caméra nécessite un vrai iPhone**. Testez sur appareil avant soumission.
 
 ## 🔐 Permissions
 

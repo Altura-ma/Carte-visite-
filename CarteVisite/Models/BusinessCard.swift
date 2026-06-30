@@ -27,6 +27,9 @@ final class BusinessCard {
     /// Photo de la carte (stockee hors de la base pour rester legere).
     @Attribute(.externalStorage) var imageData: Data?
 
+    /// Miniature compressee pour un affichage rapide en liste.
+    @Attribute(.externalStorage) var thumbnailData: Data?
+
     var createdAt: Date
 
     init(
@@ -42,6 +45,7 @@ final class BusinessCard {
         notes: String = "",
         rawText: String = "",
         imageData: Data? = nil,
+        thumbnailData: Data? = nil,
         createdAt: Date = .now
     ) {
         self.id = id
@@ -56,6 +60,7 @@ final class BusinessCard {
         self.notes = notes
         self.rawText = rawText
         self.imageData = imageData
+        self.thumbnailData = thumbnailData
         self.createdAt = createdAt
     }
 

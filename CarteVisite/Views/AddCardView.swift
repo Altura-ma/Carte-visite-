@@ -89,7 +89,8 @@ struct AddCardView: View {
             address: draft.address,
             notes: draft.notes,
             rawText: rawText,
-            imageData: image.jpegData(compressionQuality: 0.8)
+            imageData: ImageProcessing.fullImageData(from: image),
+            thumbnailData: ImageProcessing.thumbnailData(from: image)
         )
         modelContext.insert(card)
         dismiss()

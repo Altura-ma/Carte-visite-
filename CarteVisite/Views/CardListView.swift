@@ -14,6 +14,7 @@ struct CardListView: View {
     @State private var photoItem: PhotosPickerItem?
     @State private var pendingImage: UIImage?
     @State private var showAddSheet = false
+    @State private var showAbout = false
 
     private var filteredCards: [BusinessCard] {
         guard !searchText.isEmpty else { return cards }
@@ -35,6 +36,14 @@ struct CardListView: View {
             }
             .navigationTitle("Coffre de cartes")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showAbout = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                    }
+                    .accessibilityLabel("A propos")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showSourceDialog = true
@@ -70,6 +79,9 @@ struct CardListView: View {
                 if let pendingImage {
                     AddCardView(image: pendingImage)
                 }
+            }
+            .sheet(isPresented: $showAbout) {
+                AboutView()
             }
             .onChange(of: photoItem) { _, newItem in
                 guard let newItem else { return }
@@ -161,7 +173,7 @@ struct CardRow: View {
 
     @ViewBuilder
     private var thumbnail: some View {
-        if let data = card.imageData, let uiImage = UIImage(data: data) {
+        if let data = card.thumbnailData ?? card.imageData, let uiImage = UIImage(data: data) {
             Image(uiImage: uiImage)
                 .resizable()
                 .scaledToFill()
