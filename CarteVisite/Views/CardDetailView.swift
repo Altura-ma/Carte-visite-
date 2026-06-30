@@ -20,6 +20,14 @@ struct CardDetailView: View {
             VStack(spacing: 20) {
                 cardImage
                 quickActions
+                if !card.tags.isEmpty {
+                    FlowLayout(spacing: 8) {
+                        ForEach(card.tags, id: \.self) { tag in
+                            TagBadge(text: tag)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 infoSection
             }
             .padding()

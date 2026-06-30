@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import PhotosUI
+import UniformTypeIdentifiers
 
 /// Ecran principal : le "coffre" de cartes de visite.
 struct CardListView: View {
@@ -18,13 +19,24 @@ struct CardListView: View {
     @State private var showShare = false
     @State private var shareItems: [Any] = []
     @State private var exportError: String?
+    @State private var showImporter = false
+    @State private var infoMessage: String?
+    @State private var selectedTag: String?
+
+    /// Toutes les etiquettes presentes dans le coffre, triees.
+    private var allTags: [String] {
+        Set(cards.flatMap { $0.tags }).sorted()
+    }
 
     private var filteredCards: [BusinessCard] {
-        guard !searchText.isEmpty else { return cards }
-        let query = searchText.lowercased()
-        return cards.filter { card in
-            [card.fullName, card.company, card.jobTitle, card.email, card.phone, card.mobile]
-                .contains { $0.lowercased().contains(query) }
+        cards.filter { card in
+            let matchesTag = selectedTag == nil || card.tags.contains(selectedTag!)
+            guard matchesTag else { return false }
+            guard !searchText.isEmpty else { return true }
+            let query = searchText.lowercased()
+            return ([card.fullName, card.company, card.jobTitle, card.email, card.phone, card.mobile]
+                .contains { $0.lowercased().contains(query) })
+                || card.tags.contains { $0.lowercased().contains(query) }
         }
     }
 
@@ -42,11 +54,17 @@ struct CardListView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
                         Button {
+                            showImporter = true
+                        } label: {
+                            Label("Importer un fichier .vcf", systemImage: "square.and.arrow.down")
+                        }
+                        Button {
                             exportAll()
                         } label: {
                             Label("Exporter le coffre (.vcf)", systemImage: "square.and.arrow.up")
                         }
                         .disabled(cards.isEmpty)
+                        Divider()
                         Button {
                             showAbout = true
                         } label: {
@@ -99,6 +117,11 @@ struct CardListView: View {
             .sheet(isPresented: $showShare) {
                 ShareSheet(items: shareItems)
             }
+            .fileImporter(isPresented: $showImporter,
+                          allowedContentTypes: [.vCard, .text],
+                          allowsMultipleSelection: false) { result in
+                handleImport(result)
+            }
             .alert("Export impossible", isPresented: Binding(
                 get: { exportError != nil },
                 set: { if !$0 { exportError = nil } }
@@ -106,6 +129,14 @@ struct CardListView: View {
                 Button("OK") {}
             } message: {
                 Text(exportError ?? "")
+            }
+            .alert("Import", isPresented: Binding(
+                get: { infoMessage != nil },
+                set: { if !$0 { infoMessage = nil } }
+            )) {
+                Button("OK") {}
+            } message: {
+                Text(infoMessage ?? "")
             }
             .onChange(of: photoItem) { _, newItem in
                 guard let newItem else { return }
@@ -131,6 +162,24 @@ struct CardListView: View {
         }
     }
 
+    private func handleImport(_ result: Result<[URL], Error>) {
+        do {
+            guard let url = try result.get().first else { return }
+            let needsAccess = url.startAccessingSecurityScopedResource()
+            defer { if needsAccess { url.stopAccessingSecurityScopedResource() } }
+
+            let imported = try ContactManager.importCards(fromVCardAt: url)
+            guard !imported.isEmpty else {
+                infoMessage = "Aucune carte n'a ete trouvee dans ce fichier."
+                return
+            }
+            for card in imported { modelContext.insert(card) }
+            infoMessage = "\(imported.count) carte(s) importee(s) dans le coffre."
+        } catch {
+            exportError = "Import impossible : \(error.localizedDescription)"
+        }
+    }
+
     private func presentReview(with image: UIImage) {
         pendingImage = image
         // Petit delai pour laisser la feuille precedente se fermer proprement.
@@ -142,17 +191,44 @@ struct CardListView: View {
     // MARK: - Sous-vues
 
     private var cardList: some View {
-        List {
-            ForEach(filteredCards) { card in
-                NavigationLink {
-                    CardDetailView(card: card)
-                } label: {
-                    CardRow(card: card)
+        VStack(spacing: 0) {
+            if !allTags.isEmpty {
+                tagFilterBar
+            }
+            if filteredCards.isEmpty {
+                ContentUnavailableView.search
+            } else {
+                List {
+                    ForEach(filteredCards) { card in
+                        NavigationLink {
+                            CardDetailView(card: card)
+                        } label: {
+                            CardRow(card: card)
+                        }
+                    }
+                    .onDelete(perform: deleteCards)
+                }
+                .listStyle(.insetGrouped)
+            }
+        }
+    }
+
+    private var tagFilterBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                FilterChip(label: "Toutes", selected: selectedTag == nil) {
+                    selectedTag = nil
+                }
+                ForEach(allTags, id: \.self) { tag in
+                    FilterChip(label: tag, selected: selectedTag == tag) {
+                        selectedTag = (selectedTag == tag) ? nil : tag
+                    }
                 }
             }
-            .onDelete(perform: deleteCards)
+            .padding(.horizontal)
+            .padding(.vertical, 8)
         }
-        .listStyle(.insetGrouped)
+        .background(.bar)
     }
 
     private var emptyState: some View {

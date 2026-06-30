@@ -1,5 +1,6 @@
 import Foundation
 import Contacts
+import UIKit
 
 /// Gere l'ajout d'une carte au carnet de contacts iOS et la generation de vCard.
 enum ContactManager {
@@ -132,5 +133,64 @@ enum ContactManager {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
         try data.write(to: url, options: .atomic)
         return url
+    }
+
+    // MARK: - Import du coffre
+
+    /// Lit un fichier .vcf et construit les cartes correspondantes (non inserees).
+    static func importCards(fromVCardAt url: URL) throws -> [BusinessCard] {
+        let data = try Data(contentsOf: url)
+        let contacts = try CNContactVCardSerialization.contacts(with: data)
+        return contacts.map { card(from: $0) }
+    }
+
+    /// Construit une carte a partir d'un CNContact (import vCard).
+    static func card(from contact: CNContact) -> BusinessCard {
+        let fullName = [contact.givenName, contact.familyName]
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+
+        var phone = ""
+        var mobile = ""
+        for entry in contact.phoneNumbers {
+            let number = entry.value.stringValue
+            if entry.label == CNLabelPhoneNumberMobile {
+                if mobile.isEmpty { mobile = number }
+            } else if phone.isEmpty {
+                phone = number
+            }
+        }
+        if phone.isEmpty, let first = contact.phoneNumbers.first(where: { $0.label != CNLabelPhoneNumberMobile }) {
+            phone = first.value.stringValue
+        }
+
+        let email = contact.emailAddresses.first.map { String($0.value) } ?? ""
+        let website = contact.urlAddresses.first.map { String($0.value) } ?? ""
+
+        var address = ""
+        if let postal = contact.postalAddresses.first?.value {
+            address = [postal.street, postal.postalCode, postal.city, postal.country]
+                .filter { !$0.isEmpty }
+                .joined(separator: " ")
+        }
+
+        let imageData = contact.imageData
+        var thumbnailData: Data?
+        if let imageData, let image = UIImage(data: imageData) {
+            thumbnailData = ImageProcessing.thumbnailData(from: image)
+        }
+
+        return BusinessCard(
+            fullName: fullName,
+            jobTitle: contact.jobTitle,
+            company: contact.organizationName,
+            email: email,
+            phone: phone,
+            mobile: mobile,
+            website: website,
+            address: address,
+            imageData: imageData,
+            thumbnailData: thumbnailData
+        )
     }
 }

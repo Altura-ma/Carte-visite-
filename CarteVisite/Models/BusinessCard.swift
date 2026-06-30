@@ -21,6 +21,9 @@ final class BusinessCard {
     var address: String
     var notes: String
 
+    /// Etiquettes pour organiser et filtrer les cartes (ex. "Client", "Salon 2026").
+    var tags: [String]
+
     /// Texte brut reconnu par l'OCR, conserve pour reference / re-analyse.
     var rawText: String
 
@@ -43,6 +46,7 @@ final class BusinessCard {
         website: String = "",
         address: String = "",
         notes: String = "",
+        tags: [String] = [],
         rawText: String = "",
         imageData: Data? = nil,
         thumbnailData: Data? = nil,
@@ -58,6 +62,7 @@ final class BusinessCard {
         self.website = website
         self.address = address
         self.notes = notes
+        self.tags = tags
         self.rawText = rawText
         self.imageData = imageData
         self.thumbnailData = thumbnailData

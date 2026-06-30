@@ -19,8 +19,10 @@ Tout fonctionne **hors-ligne** : aucune donnée ne quitte l'appareil.
   interprétation des formats **vCard, MECARD, URL, mailto:, tel:** (voir `BarcodeParser.swift`).
   Les données structurées du QR sont prioritaires sur l'OCR.
 - **Ajout aux contacts en 1 clic** — création d'un contact via le framework **Contacts**.
+- **Étiquettes (tags)** — organisez les cartes par étiquettes et filtrez le coffre en un tap.
 - **Partage** — génération d'une **vCard (.vcf)** + image, partagées via la feuille système iOS.
 - **Export du coffre** — exporte toutes les cartes dans un seul fichier **.vcf** (sauvegarde / migration).
+- **Import .vcf** — réinjecte une sauvegarde ou un carnet vCard existant dans le coffre.
 - **Recherche, édition et suppression** des cartes.
 
 ## 🧠 Comment marche la reconnaissance « IA locale » ?
@@ -65,7 +67,8 @@ CarteVisite/
    ├─ AddCardView.swift        # Revue après scan (analyse + correction)
    ├─ CardDetailView.swift     # Détail + actions (contact, partage)
    ├─ CardEditView.swift       # Édition
-   ├─ CardForm.swift           # Formulaire réutilisable
+   ├─ CardForm.swift           # Formulaire réutilisable (+ tags)
+   ├─ Components.swift          # Chips, FlowLayout, éditeur d'étiquettes
    ├─ AboutView.swift          # Écran « À propos » + confidentialité
    └─ DocumentScannerView.swift# Scanner VisionKit + feuille de partage
 ```
@@ -98,6 +101,5 @@ Déclarées dans les réglages du projet (`INFOPLIST_KEY_*`) :
 ## 🗺️ Pistes d'amélioration
 
 - Détection de langue automatique et support multilingue étendu.
-- Tags / dossiers pour organiser les cartes.
 - Synchronisation iCloud (CloudKit) optionnelle.
-- Import d'un fichier .vcf existant dans le coffre.
+- Verrouillage du coffre par Face ID / Touch ID.

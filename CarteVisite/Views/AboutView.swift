@@ -38,8 +38,10 @@ struct AboutView: View {
                                text: "Les codes QR des cartes (vCard, MECARD, URL…) sont lus et remplissent automatiquement la fiche.")
                     FeatureRow(icon: "person.crop.circle.badge.plus", title: "Contact en 1 clic",
                                text: "Ajoutez la personne a vos contacts instantanement.")
-                    FeatureRow(icon: "square.and.arrow.up", title: "Partage et export",
-                               text: "Partagez une carte au format vCard, ou exportez tout le coffre en un fichier .vcf.")
+                    FeatureRow(icon: "tag", title: "Etiquettes",
+                               text: "Organisez vos cartes avec des etiquettes et filtrez en un tap.")
+                    FeatureRow(icon: "square.and.arrow.up", title: "Import / export",
+                               text: "Exportez tout le coffre en .vcf, ou importez un fichier .vcf existant.")
                 }
 
                 Section("Confidentialite") {

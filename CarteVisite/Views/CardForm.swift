@@ -11,6 +11,7 @@ struct CardDraft {
     var website = ""
     var address = ""
     var notes = ""
+    var tags: [String] = []
 
     init() {}
 
@@ -35,6 +36,7 @@ struct CardDraft {
         website = card.website
         address = card.address
         notes = card.notes
+        tags = card.tags
     }
 
     /// Applique le brouillon sur un objet carte (edition).
@@ -48,6 +50,7 @@ struct CardDraft {
         card.website = website
         card.address = address
         card.notes = notes
+        card.tags = tags
     }
 }
 
@@ -74,6 +77,10 @@ struct CardFormFields: View {
                 .keyboardType(.URL)
                 .textInputAutocapitalization(.never)
             LabeledField(label: "Adresse", systemImage: "mappin.and.ellipse", text: $draft.address)
+        }
+
+        Section("Etiquettes") {
+            TagsEditor(tags: $draft.tags)
         }
 
         Section("Notes") {
